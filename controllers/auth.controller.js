@@ -66,13 +66,9 @@ export const userLogin = async (req, res, next)=>{
                 email: email
             });
 
-            console.log("1. Did we find the user?", foundUser ? "Yes" : "No"); // ADD THIS
-
             if(!foundUser) return res.status(404).json({msg: "Invalid credentials, try again!!!"});
 
             const isPasswordValid = await bcrypt.compare(password, foundUser.password);
-
-            console.log("2. Did passwords match?", isPasswordValid); // ADD THIS
 
             if(!isPasswordValid) {return res.status(401).json({msg: "Invalid credentials, try again!!!"}); }
 
