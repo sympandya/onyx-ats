@@ -19,6 +19,10 @@ const jobSchema = new mongoose.Schema({
         enum: ["full-time", "part-time", "contract", "freelance"],
         required: true
     },
+    numOfOpenings: {
+        type: Number,
+        required: true
+    },
     workMode: {
         type: String,
         enum: ["remote", "on-site", "hybrid"],
@@ -34,7 +38,7 @@ const jobSchema = new mongoose.Schema({
         required: true
     },
     salary: {
-        type: Number,
+        type: String,
         required: true
     },
     requiredSkills: [{
@@ -45,7 +49,7 @@ const jobSchema = new mongoose.Schema({
         type: String, 
         enum: ["Open", "Closed"],
         required: true,
-        default: "open"
+        default: "Open"
     },
     isActive: {
         type: Boolean, default: true 

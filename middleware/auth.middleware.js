@@ -11,9 +11,7 @@ export const verifyToken = async (req, res, next)=>{
 
     try{
         const decodedPayload = jwt.verify(token, JWT_SECRET);
-        console.log(decodedPayload);
         const foundUser = await User.findById(decodedPayload.id).select("-password");
-        console.log(foundUser);
         if(!foundUser){
             return res.status(400).json({msg: "Something went wrong!!!"});
         }
