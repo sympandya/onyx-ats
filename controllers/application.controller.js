@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
+import { sendEmail } from "../config/email.util.js";
 
 const applicationSchema = z.object({
     appliedResumeLink: z.url(),
@@ -66,11 +67,56 @@ export const updateStatus = async (req, res)=>{
         if(typeof status !== 'string' || !status){
             return res.status(400).json({msg: "Status is not valid or empty!!!"});
         }
+        
         const updatedApplication = await Application.findOneAndUpdate({
             _id: req.params.applicationId
-        }, {status: status}, {returnDocument: 'after', runValidators: true});
-
+        }, {status: status}, {returnDocument: 'after', runValidators: true})
+        .populate("candidateId", "name email")
+        .populate({
+            path: "jobId",
+            select: "title recruiterId",
+            populate: {
+                path: "recruiterId",
+                select: "companyName"
+            }
+        });
+        
         if(updatedApplication == null) return res.status(404).json({msg: "Application not found!!!"});
+        let recipientMailId, subject, content;
+        
+        
+        if(status == "Shortlisted"){
+            recipientMailId = updatedApplication.candidateId.email;
+            subject = `Update on your application for ${updatedApplication.jobId.title} role at ${updatedApplication.jobId.recruiterId.companyName}`;
+            content = `<div style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+                            <h2 style="color: #10b981; margin-top: 0;">Great news, ${updatedApplication.candidateId.name}! 🎉</h2>
+                            <p>Thank you for taking the time to apply for the <strong>${updatedApplication.jobId.title}</strong> position at ${updatedApplication.jobId.recruiterId.companyName}.</p>
+                            <p>We were incredibly impressed by your background and experience. We are excited to let you know that your application has been <strong>shortlisted</strong> for the next round!</p>
+                            <p>Our team will be reaching out to you very soon with details about the interview process and next steps. Keep an eye on your inbox.</p>
+                            <br/>
+                            <p style="margin-bottom: 0;">Best regards,</p>
+                            <p style="margin-top: 5px;"><strong>The ${updatedApplication.jobId.recruiterId.companyName} Team</strong></p>
+                        </div>`
+        }
+        else if(status == "Rejected"){
+            recipientMailId = updatedApplication.candidateId.email;
+            subject = `Final Update on your application for ${updatedApplication.jobId.title} role at ${updatedApplication.jobId.recruiterId.companyName}`;
+            content = `<div style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+                        <h2 style="color: #4a4a4a; margin-top: 0;">Update on your application</h2>
+                        <p>Hi ${updatedApplication.candidateId.name},</p>
+                        <p>Thank you for your interest in joining ${updatedApplication.jobId.recruiterId.companyName} and for applying for the <strong>${updatedApplication.jobId.title}</strong> role.</p>
+                        <p>We received many strong applications, and while we truly appreciate your skills and background, we have decided to move forward with other candidates whose experience more closely aligns with our current needs for this specific position.</p>
+                        <p>We know the job search process can be exhausting, and we deeply value the time you took to share your background with us.</p>
+                        <p>We wish you the absolute best in your career journey and future endeavors.</p>
+                        <br/>
+                        <p style="margin-bottom: 0;">Best regards,</p>
+                        <p style="margin-top: 5px;"><strong>The ${updatedApplication.jobId.recruiterId.companyName} Team</strong></p>
+                        </div>`
+        }
+
+        if (recipientMailId && subject && content) {
+            await sendEmail(recipientMailId, subject, content);
+        }
 
         return res.status(200).json({msg: "Status updated successfully..."});
     }

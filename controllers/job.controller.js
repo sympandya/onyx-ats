@@ -1,5 +1,6 @@
 import z from "zod"
 import { Job } from "../models/job.model.js"
+import { User } from "../models/user.model.js";
 
 const postJobSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
@@ -74,6 +75,40 @@ export const getJobById = async (req, res)=>{
         if(!foundJob) return res.status(404).json({msg: "Job not found!!!"});
 
         return res.status(200).json({foundJob: foundJob});
+    }
+    catch(e){
+        return res.status(400).json({
+            msg: "Something went wrong!!!",
+            errors: e
+        });
+    }
+}
+
+
+// Save a Job
+export const saveJob = async(req, res)=>{
+    const userId = req.user._id;
+    const jobId = req.params.jobId;
+
+    try{
+        const foundJob = await Job.findById(jobId);
+        if(!foundJob) return res.status(404).json({msg: "Job not found"});
+
+        const user = await User.findById(userId);
+
+        const isJobSaved = user.savedJobs.some(id => id.toString() === jobId);
+
+        if(isJobSaved){
+            await User.findByIdAndUpdate(userId, {
+                $pull: {savedJobs: jobId}
+            });
+            return res.status(200).json({msg: "Job removed successfully..."});
+        }else{
+            await User.findByIdAndUpdate(userId, {
+                $addToSet: {savedJobs: jobId}
+            });
+            return res.status(201).json({msg: "Job added successfully..."});
+        }
     }
     catch(e){
         return res.status(400).json({
