@@ -2,11 +2,24 @@ import { z } from "zod";
 import { Application } from "../models/application.model.js";
 import { Job } from "../models/job.model.js";
 import { sendEmail } from "../config/email.util.js";
+import { User } from "../models/user.model.js";
+
+const calculateScore = (candidateSkillsArray, requiredSkillsArray) => {
+    
+    if (requiredSkillsArray.length === 0) return 100;
+
+    const candidateSkills = candidateSkillsArray.map(skill => skill.trim().toLowerCase());
+    const requiredSkills = requiredSkillsArray.map(skill => skill.trim().toLowerCase());
+
+    const matchingSkills = candidateSkills.filter(element => requiredSkills.includes(element));
+    
+    return Math.round((matchingSkills.length / requiredSkills.length) * 100);
+}
 
 const applicationSchema = z.object({
     appliedResumeLink: z.url(),
     coverLetter: z.url()
-})
+}).partial();
 
 // Apply for a Job
 export const applyJob = async (req, res)=>{
@@ -15,23 +28,51 @@ export const applyJob = async (req, res)=>{
     if(parseResults.success){
         try{
             const { appliedResumeLink, coverLetter } = parseResults.data;
+            
             const doesApplicationExist = await Application.findOne({
                 candidateId: req.user._id,
                 jobId: req.params.jobId
             });
             if(doesApplicationExist) return res.status(409).json({msg: "You have already applied for this role!!!"});
-            else{
+            
+            const userDoc = await User.findById(req.user._id).select("defaultResumeLink skills");
+            const jobDoc = await Job.findById(req.params.jobId).select("requiredSkills");
+
+            if (!jobDoc) return res.status(404).json({msg: "Job not found"});
+
+            const candidateSkillsArray = userDoc.skills || []; 
+            const requiredSkillsArray = jobDoc.requiredSkills || [];
+            const defaultResumeLink = userDoc.defaultResumeLink;
+
+            const matchScore = calculateScore(candidateSkillsArray, requiredSkillsArray);
+
+            if(appliedResumeLink){
                 await Application.create({
                     candidateId: req.user._id,
+                    matchScore: matchScore,
                     jobId: req.params.jobId,
                     appliedResumeLink: appliedResumeLink,
                     coverLetter: coverLetter,
                 });
+                console.log("Application made with custom resume...");
+                return res.status(201).json({msg: "Application successfull..."});
+            }
+            else{
+                if(!defaultResumeLink) return res.status(400).json({msg: "Please add default resume in profile before applying!!!"});
+                await Application.create({
+                    candidateId: req.user._id,
+                    matchScore: matchScore,
+                    jobId: req.params.jobId,
+                    appliedResumeLink: defaultResumeLink,
+                    coverLetter: coverLetter,
+                });
+                console.log("Application made with default resume...");
                 return res.status(201).json({msg: "Application successfull..."});
             }
         }
         catch(e){
-            return res.status(400).json({msg: "Something went wrong!!!", errors: e});
+            return res.status(500).json({
+            msg: "Something went wrong!!!", errorName: e.name,});
         }
     }
     else{

@@ -117,3 +117,37 @@ export const saveJob = async(req, res)=>{
         });
     }
 }
+
+
+
+// Search/Filter functionality
+export const searchJob = async (req, res)=>{
+    let searchQuery = {
+        status: "Open",
+        isActive: true,
+    };
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    if(req.query.keyword) searchQuery.title = {$regex: req.query.keyword, $options: 'i'};
+    if(req.query.jobType) searchQuery.jobType = req.query.jobType;
+    if(req.query.workMode) searchQuery.workMode = req.query.workMode;
+    if(req.query.experienceLevel) searchQuery.experienceLevel = req.query.experienceLevel;
+    if(req.query.location) searchQuery.location = {$regex: req.query.location, $options: 'i'};
+
+    try{
+        const totalJobs = await Job.countDocuments(searchQuery);
+        const totalPages = Math.ceil(totalJobs / limit);
+        const searchResults = await Job.find(searchQuery).skip(skip).limit(limit);
+        if(searchResults.length == 0) return res.status(200).json({ jobs: [], totalJobs: 0, totalPages: 0, msg: "No Jobs found!!!" });
+        res.status(200).json({jobs: searchResults, totalJobs, totalPages});
+    }
+    catch(e){
+        return res.status(400).json({
+            msg: "Something went wrong!!!",
+            errors: e
+        }); 
+    }
+}
