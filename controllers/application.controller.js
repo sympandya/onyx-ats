@@ -5,7 +5,7 @@ import { sendEmail } from "../config/email.util.js";
 import { User } from "../models/user.model.js";
 
 const calculateScore = (candidateSkillsArray, requiredSkillsArray) => {
-    
+
     if (requiredSkillsArray.length === 0) return 100;
 
     const candidateSkills = candidateSkillsArray.map(skill => skill.trim().toLowerCase());
@@ -86,7 +86,7 @@ export const getApplicants = async (req, res)=>{
         const jobFound = await Job.findOne({_id: req.params.jobId, recruiterId: req.user._id});
         if(!jobFound) return res.status(404).json({msg: "Job not found!!!"});
 
-        const applications = await Application.find({jobId: req.params.jobId}).populate("candidateId", "-password");
+        const applications = await Application.find({jobId: req.params.jobId}).populate("candidateId", "-password").sort({matchScore: -1});
 
         if(!applications) return res.status(400).json("Something went wrong");
         if(applications.length == 0) return res.status(200).json({msg: "No applications yet!!!"});
@@ -108,10 +108,24 @@ export const updateStatus = async (req, res)=>{
         if(typeof status !== 'string' || !status){
             return res.status(400).json({msg: "Status is not valid or empty!!!"});
         }
-        
+
+        let updatePayload = { status: status };
+        if(status === "Rejected" && !req.body.rejectionReason) return res.status(400).json({msg: "Include rejection reason to update the Candidate's status!!!"});
+
+        if(status === "Rejected" && req.body.rejectionReason) updatePayload.rejectionReason = req.body.rejectionReason;
+        else if(status === "Interview") {
+            if(req.body.interviewDate && req.body.interviewTime && req.body.interviewLink ){
+                updatePayload.interviewDate = req.body.interviewDate;
+                updatePayload.interviewTime = req.body.interviewTime;
+                updatePayload.interviewLink = req.body.interviewLink;
+            }else{
+                return res.status(400).json({msg: "Include all interview details to update the Candidate's status!!!"});
+            }
+        }
+
         const updatedApplication = await Application.findOneAndUpdate({
             _id: req.params.applicationId
-        }, {status: status}, {returnDocument: 'after', runValidators: true})
+        }, updatePayload, {returnDocument: 'after', runValidators: true})
         .populate("candidateId", "name email")
         .populate({
             path: "jobId",
@@ -152,6 +166,26 @@ export const updateStatus = async (req, res)=>{
                         <br/>
                         <p style="margin-bottom: 0;">Best regards,</p>
                         <p style="margin-top: 5px;"><strong>The ${updatedApplication.jobId.recruiterId.companyName} Team</strong></p>
+                        </div>`
+        }
+        else if(status == "Interviewing"){
+            const { interviewDate, interviewTime, interviewLink } = req.body; 
+            recipientMailId = updatedApplication.candidateId.email;
+            subject = `Interview Invitation: ${updatedApplication.jobId.title} at ${updatedApplication.jobId.recruiterId.companyName}`;
+            content = `<div style="font-family: 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333333; max-width: 600px; margin: 0 auto; padding: 30px; border: 1px solid #eaeaea; border-radius: 8px; background-color: #ffffff;">
+                            <h2 style="color: #3b82f6; margin-top: 0;">Interview Invitation! 📅</h2>
+                            <p>Hi ${updatedApplication.candidateId.name},</p>
+                            <p>We are excited to move forward with your application for the <strong>${updatedApplication.jobId.title}</strong> position at <strong>${updatedApplication.jobId.recruiterId.companyName}</strong>.</p>
+                            <p>We would like to invite you for an interview to discuss your background and how you can contribute to our team.</p>
+                            <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 4px;">
+                                <p style="margin: 0 0 10px 0;"><strong>🗓 Date:</strong> ${interviewDate}</p>
+                                <p style="margin: 0 0 10px 0;"><strong>⏰ Time:</strong> ${interviewTime}</p>
+                                <p style="margin: 0;"><strong>🔗 Meeting Link:</strong> <a href="${interviewLink}" style="color: #3b82f6; text-decoration: underline;">Join Interview</a></p>
+                            </div>
+                            <p>We look forward to speaking with you!</p>
+                            <br/>
+                            <p style="margin-bottom: 0;">Best regards,</p>
+                            <p style="margin-top: 5px;"><strong>The ${updatedApplication.jobId.recruiterId.companyName} Team</strong></p>
                         </div>`
         }
 
