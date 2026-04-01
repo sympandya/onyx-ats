@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
 
 const jobQASchema = new mongoose.Schema({
     jobId: {
@@ -26,6 +26,6 @@ const jobQASchema = new mongoose.Schema({
         type: Boolean,
         default: true
     }
-}, {timestamps: true})
+}, {timestamps: true});
 
 export const JobQA = mongoose.model("JobQA", jobQASchema);

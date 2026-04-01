@@ -1,6 +1,7 @@
 import z from "zod"
 import { Job } from "../models/job.model.js"
 import { User } from "../models/user.model.js";
+import { JobQA } from "../models/jobQA.model.js";
 
 const postJobSchema = z.object({
     title: z.string().min(3, "Title must be at least 3 characters"),
@@ -50,16 +51,22 @@ export const postJob = async(req, res)=>{
 // Get all Jobs
 export const getAllJobs = async (req, res)=>{
     try{
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+        const totalJobs = await Job.countDocuments({status: "Open", isActive: true});
+        const totalPages = Math.ceil(totalJobs / limit);
+
         const jobs = await Job.find({
             status: "Open",
             isActive: true
-        }).populate("recruiterId", "companyName companyLogoUrl -_id");
+        }).populate("recruiterId", "companyName companyLogoUrl -_id").skip(skip).limit(limit);
         return res.status(200).json({
-            jobs: jobs
+            jobs, page, totalPages
         });
     }
     catch(e){
-        return res.status(400).json({
+        return res.status(500).json({
             msg: "Something went wrong!!!",
             errors: e
         });
@@ -77,7 +84,7 @@ export const getJobById = async (req, res)=>{
         return res.status(200).json({foundJob: foundJob});
     }
     catch(e){
-        return res.status(400).json({
+        return res.status(500).json({
             msg: "Something went wrong!!!",
             errors: e
         });
@@ -145,9 +152,75 @@ export const searchJob = async (req, res)=>{
         res.status(200).json({jobs: searchResults, totalJobs, totalPages});
     }
     catch(e){
-        return res.status(400).json({
+        return res.status(500).json({
             msg: "Something went wrong!!!",
             errors: e
         }); 
+    }
+}
+
+
+//Ask a question
+export const askQuestion = async (req, res)=>{
+    const jobId = req.params.jobId;
+    if(!jobId) return res.status(400).json({msg: "JobId not provided!!!"});
+    const questionText = req.body.questionText;
+    if(!questionText) return res.status(400).json({msg: "Question not provided!!!"});
+
+    try{
+        await JobQA.create({
+            jobId: jobId,
+            askerId: req.user._id,
+            questionText: questionText
+        });
+        return res.status(201).json({msg: "Question posted succesfully!!!"});
+    }
+    catch(e){
+        return res.status(500).json({
+            msg: "Something went wrong!!!",
+            errors: e
+        });
+    }
+}
+
+//Answer a question
+export const answerAQuestion = async (req, res)=>{
+    const jobId = req.params.jobId;
+    if(!jobId) return res.status(400).json({msg: "JobId not provided!!!"});
+    const questionId = req.params.questionId;
+    const answerText = req.body.answerText;
+    if(!answerText) return res.status(400).json({msg: "Answer not provided!!!"});
+
+    try{
+        const validRecruiter = await Job.findOne({_id: jobId, recruiterId: req.user._id});
+        if (!validRecruiter) return res.status(403).json({msg: "You are not authorised for this operation!!!"});
+        await JobQA.findOneAndUpdate({_id: questionId}, {answerText: answerText, isAnswered: true}, {new: true});
+        return res.status(201).json({msg: "Answer posted succesfully!!!"});
+    }
+    catch(e){
+        return res.status(500).json({
+            msg: "Something went wrong!!!",
+            errors: e
+        });
+    }
+}
+
+// Get a Job's QnA
+export const getJobQnA = async (req, res)=>{
+    const jobId = req.params.jobId;
+    if(!jobId) return res.status(400).json({msg: "Job id not valid!!!"});
+    
+    try{
+        const jobQnA = await JobQA.find({
+            jobId: jobId, isActive: true
+        }).populate("askerId", "name").sort({createdAt: -1});
+        if(jobQnA.length == 0) return res.status(200).json({msg: "No questions asked yet!!!"});
+        return res.status(200).json({jobQnA: jobQnA});
+    }
+    catch(e){
+        return res.status(500).json({
+            msg: "Something went wrong!!!",
+            errors: e
+        });
     }
 }

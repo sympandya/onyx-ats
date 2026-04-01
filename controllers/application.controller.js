@@ -86,17 +86,20 @@ export const getApplicants = async (req, res)=>{
         const jobFound = await Job.findOne({_id: req.params.jobId, recruiterId: req.user._id});
         if(!jobFound) return res.status(404).json({msg: "Job not found!!!"});
 
-        const applications = await Application.find({jobId: req.params.jobId}).populate("candidateId", "-password").sort({matchScore: -1});
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+        const totalApplications = await Application.countDocuments({jobId: req.params.jobId});
+        const totalPages = Math.ceil(totalApplications / limit);
 
-        if(!applications) return res.status(400).json("Something went wrong");
-        if(applications.length == 0) return res.status(200).json({msg: "No applications yet!!!"});
+        const applications = await Application.find({jobId: req.params.jobId}).populate("candidateId", "-password").sort({matchScore: -1}).skip(skip).limit(limit);
 
         return res.status(200).json({
-            applications: applications
+            applications, page, totalPages
         });
     }
     catch(e){
-        return res.status(400).json({msg: "Something went wrong!!!", errors: e});
+        return res.status(500).json({msg: "Something went wrong!!!", errors: e});
     }
 }
 
@@ -179,6 +182,7 @@ export const updateStatus = async (req, res)=>{
                             <p>We would like to invite you for an interview to discuss your background and how you can contribute to our team.</p>
                             <div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 20px; margin: 25px 0; border-radius: 4px;">
                                 <p style="margin: 0 0 10px 0;"><strong>🗓 Date:</strong> ${interviewDate}</p>
+                                
                                 <p style="margin: 0 0 10px 0;"><strong>⏰ Time:</strong> ${interviewTime}</p>
                                 <p style="margin: 0;"><strong>🔗 Meeting Link:</strong> <a href="${interviewLink}" style="color: #3b82f6; text-decoration: underline;">Join Interview</a></p>
                             </div>
@@ -194,6 +198,44 @@ export const updateStatus = async (req, res)=>{
         }
 
         return res.status(200).json({msg: "Status updated successfully..."});
+    }
+    catch(e){
+        return res.status(400).json({
+            msg: "Something went wrong!!!",
+            errors: e
+        });
+    }
+}
+
+
+
+//Export Applicants
+export const exportApplicants = async (req, res)=>{
+    const jobId = req.params.jobId;
+    const recruiterId = req.user._id;
+    if(!jobId) return res.status(400).json({msg: "Job id not found!!!"});
+
+    try{
+        const isJobValid = await Job.findOne({
+            _id: jobId,
+            recruiterId: recruiterId
+        });
+        if(!isJobValid) return res.status(403).json({msg: "You are not authorized!!!"});
+
+        const applicants = await Application.find({
+            jobId: jobId
+        }).populate("candidateId", "name email").sort({matchScore: -1});
+        
+        let csvData = "Name,Email,MatchScore,Status,Resume\n"
+
+        applicants.forEach((applicant)=>{
+            csvData = csvData + `${applicant.candidateId?.name||"N/A"},${applicant.candidateId?.email||"N/A"},${applicant.matchScore},${applicant.status},${applicant.appliedResumeLink}\n`
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=applicants.csv');
+
+        res.status(200).send(csvData);
     }
     catch(e){
         return res.status(400).json({
