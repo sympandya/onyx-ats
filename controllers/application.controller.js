@@ -80,6 +80,22 @@ export const applyJob = async (req, res)=>{
     }
 }
 
+// Candidate's applied jobs
+export const getAppliedJobs = async (req, res) => {
+    try {
+        const applications = await Application.find({ candidateId: req.user._id })
+            .populate({
+                path: "jobId",
+                populate: { path: "recruiterId", select: "companyName companyLogoUrl" } 
+            })
+            .sort({ createdAt: -1 });
+
+        return res.status(200).json({ applications });
+    } catch (e) {
+        return res.status(500).json({ msg: "Failed to fetch applied jobs", errors: e.message });
+    }
+}
+
 // Get applicants by jobId
 export const getApplicants = async (req, res)=>{
     try{
@@ -206,7 +222,6 @@ export const updateStatus = async (req, res)=>{
         });
     }
 }
-
 
 
 //Export Applicants

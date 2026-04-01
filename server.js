@@ -11,7 +11,7 @@ import ExpressMongoSanitize from "express-mongo-sanitize";
 
 const app = express();
 app.use(express.json());
-app.use(ExpressMongoSanitize());
+// app.use(ExpressMongoSanitize());
 
 connectDB();
 

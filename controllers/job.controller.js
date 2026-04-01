@@ -48,21 +48,31 @@ export const postJob = async(req, res)=>{
     }
 }
 
+
 // Get all Jobs
 export const getAllJobs = async (req, res)=>{
+
+    let searchQuery = {
+        status: "Open",
+        isActive: true
+    }
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    if(req.query.keyword) searchQuery.title = { $regex: req.query.keyword, $options: 'i' };
+    if(req.query.jobType) searchQuery.jobType = req.query.jobType;
+    if(req.query.workMode) searchQuery.workMode = req.query.workMode;
+    if(req.query.experienceLevel) searchQuery.experienceLevel = req.query.experienceLevel;
+    if(req.query.location) searchQuery.location = { $regex: req.query.location, $options: 'i' };
+
     try{
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 5;
-        const skip = (page - 1) * limit;
-        const totalJobs = await Job.countDocuments({status: "Open", isActive: true});
+        const totalJobs = await Job.countDocuments(searchQuery);
         const totalPages = Math.ceil(totalJobs / limit);
 
-        const jobs = await Job.find({
-            status: "Open",
-            isActive: true
-        }).populate("recruiterId", "companyName companyLogoUrl -_id").skip(skip).limit(limit);
+        const jobs = await Job.find(searchQuery).populate("recruiterId", "companyName companyLogoUrl -_id").sort({ createdAt: -1 }).skip(skip).limit(limit);
         return res.status(200).json({
-            jobs, page, totalPages
+            jobs, totalJobs, page, totalPages
         });
     }
     catch(e){
@@ -86,10 +96,27 @@ export const getJobById = async (req, res)=>{
     catch(e){
         return res.status(500).json({
             msg: "Something went wrong!!!",
-            errors: e
+            errors: e.message
         });
     }
 }
+
+// Get all job (by recruiter)
+export const getMyJobs = async (req, res) => {
+    try {
+        const myJobs = await Job.find({ recruiterId: req.user._id }).sort({ createdAt: -1 });
+
+        if(myJobs.length === 0) {
+            return res.status(200).json({ jobs: [], msg: "You haven't posted any jobs yet." });
+        }
+
+        return res.status(200).json({ jobs: myJobs });
+    } 
+    catch (e) {
+        return res.status(500).json({ msg: "Failed to fetch your jobs!!!", errors: e.message });
+    }
+}
+
 
 
 // Save a Job
@@ -126,36 +153,24 @@ export const saveJob = async(req, res)=>{
 }
 
 
+// Get all saved jobs
+export const getSavedJobs = async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).populate({
+            path: "savedJobs", 
+            populate: {
+                path: "recruiterId",
+                select: "companyName companyLogoUrl"
+            }
+        });
 
-// Search/Filter functionality
-export const searchJob = async (req, res)=>{
-    let searchQuery = {
-        status: "Open",
-        isActive: true,
-    };
+        if (!user) {
+            return res.status(404).json({ msg: "User not found" });
+        }
 
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    if(req.query.keyword) searchQuery.title = {$regex: req.query.keyword, $options: 'i'};
-    if(req.query.jobType) searchQuery.jobType = req.query.jobType;
-    if(req.query.workMode) searchQuery.workMode = req.query.workMode;
-    if(req.query.experienceLevel) searchQuery.experienceLevel = req.query.experienceLevel;
-    if(req.query.location) searchQuery.location = {$regex: req.query.location, $options: 'i'};
-
-    try{
-        const totalJobs = await Job.countDocuments(searchQuery);
-        const totalPages = Math.ceil(totalJobs / limit);
-        const searchResults = await Job.find(searchQuery).skip(skip).limit(limit);
-        if(searchResults.length == 0) return res.status(200).json({ jobs: [], totalJobs: 0, totalPages: 0, msg: "No Jobs found!!!" });
-        res.status(200).json({jobs: searchResults, totalJobs, totalPages});
-    }
-    catch(e){
-        return res.status(500).json({
-            msg: "Something went wrong!!!",
-            errors: e
-        }); 
+        return res.status(200).json({ savedJobs: user.savedJobs || [] });
+    } catch (e) {
+        return res.status(500).json({ msg: "Failed to fetch saved jobs", errors: e.message });
     }
 }
 

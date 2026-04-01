@@ -13,7 +13,7 @@ export const verifyToken = async (req, res, next)=>{
         const decodedPayload = jwt.verify(token, JWT_SECRET);
         const foundUser = await User.findById(decodedPayload.id).select("-password");
         if(!foundUser){
-            return res.status(400).json({msg: "Something went wrong!!!"});
+            return res.status(401).json({msg: "The user belonging to this token no longer exists."});
         }
         req.user = foundUser;
         next();

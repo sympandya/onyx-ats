@@ -33,12 +33,12 @@ export const candidateProfileUpdate = async (req, res)=>{
         return res.status(200).json({msg: "Profile updated successfully..."});
     }
     catch(e){
-        return res.status(400).json({msg: "Something went wrong will updating the profile!!!", errors: e})
+        return res.status(500).json({msg: "Something went wrong will updating the profile!!!", errors: e})
     }
 }
 
 const recruiterSchema = z.object({
-    name: z.string().min("Name must be atleast 3 characters long"),
+    name: z.string().min(3, "Name must be atleast 3 characters long"),
     email: z.email("Invalid email format"),
     companyName: z.string().min(2,"Company name must be atleast 2 characters long"),
     companyDescription: z.string(),
@@ -68,6 +68,16 @@ export const recruiterProfileUpdate = async (req, res)=>{
         return res.status(200).json({msg: "Profile updated successfully..."});
     }
     catch(e){
-        return res.status(400).json({msg: "Something went wrong will updating the profile!!!", errors: e})
+        return res.status(500).json({msg: "Something went wrong will updating the profile!!!", errors: e})
+    }
+}
+
+export const getUserProfile = async (req, res)=>{
+    try{
+        const user = await User.findById(req.user._id).select("-password");
+        return res.status(200).json({user});
+    }
+    catch(e){
+        return res.status(500).json({msg: "Something went wrong!!!", errors: e});
     }
 }
