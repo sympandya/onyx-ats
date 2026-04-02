@@ -40,7 +40,7 @@ export const postJob = async(req, res)=>{
             });
         }
         catch(e){
-            return res.status(400).json({msg: "Something went wrong!!!", errors: e});
+            return res.status(500).json({msg: "Something went wrong!!!", errors: e});
         }
     }
     else{
@@ -145,7 +145,7 @@ export const saveJob = async(req, res)=>{
         }
     }
     catch(e){
-        return res.status(400).json({
+        return res.status(500).json({
             msg: "Something went wrong!!!",
             errors: e
         });

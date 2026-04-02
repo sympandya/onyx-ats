@@ -34,7 +34,7 @@ export const userSignup = async (req, res, next)=>{
             });
         }
         catch(e){
-            return res.status(400).json({
+            return res.status(500).json({
                 msg: `Something went wrong in sign up process!!! Error: ${e}`
             });
         }
@@ -79,7 +79,7 @@ export const userLogin = async (req, res, next)=>{
             res.status(200).json({msg: "User logged in succesfully...", token: token});
         }
         catch(e){
-            res.status(400).json({
+            res.status(500).json({
                 msg: `Something went wrong in login process!!! Error: ${e}`
             });
         }

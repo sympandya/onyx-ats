@@ -19,7 +19,7 @@ export const verifyToken = async (req, res, next)=>{
         next();
     }
     catch(e){
-        return res.status(400).json({msg: `Something went wrong in token verification process. ${e}`});
+        return res.status(500).json({msg: `Something went wrong in token verification process. ${e}`});
     }
 }
 
