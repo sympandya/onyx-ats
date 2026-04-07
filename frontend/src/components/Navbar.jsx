@@ -19,14 +19,14 @@ export const Navbar = () => {
             <Link to="/signUp">Sign Up</Link>
             <Link to="/login">Login</Link>
           </>
-        ) :  user?.role === "Recruiter" ? (
+        ) :  user?.role === "recruiter" ? (
           <>
             <Link to="/">Home</Link>
             <Link to="/newjob">Post a Job</Link>
             <Link to="/myjobs">Manage Jobs</Link>
             <Link to="/profile">Profile</Link>
           </>
-        ) :  user?.role === "Candidate" ? (
+        ) :  user?.role === "candidate" ? (
           <>
             <Link to="/">Home</Link>
             <Link to="/jobs">Jobs</Link>
