@@ -8,10 +8,15 @@ import applicationRouter from "./routes/application.route.js";
 import userRouter from "./routes/user.route.js";
 import adminRouter from "./routes/admin.routes.js";
 import ExpressMongoSanitize from "express-mongo-sanitize";
+import cors from "cors"
 
 const app = express();
 app.use(express.json());
 // app.use(ExpressMongoSanitize());
+app.use(cors({
+    origin: 'http://localhost:5173', 
+    credentials: true
+}));
 
 connectDB();
 

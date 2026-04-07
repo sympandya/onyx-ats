@@ -76,7 +76,12 @@ export const userLogin = async (req, res, next)=>{
                 id: foundUser._id
             }, JWT_SECRET);
 
-            res.status(200).json({msg: "User logged in succesfully...", token: token});
+            res.status(200).json({msg: "User logged in succesfully...", token: token, user: {
+                id: foundUser._id,
+                email: foundUser.email,
+                role: foundUser.role,
+                fullName: foundUser.name
+            }});
         }
         catch(e){
             res.status(500).json({
