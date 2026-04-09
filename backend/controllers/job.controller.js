@@ -70,7 +70,7 @@ export const getAllJobs = async (req, res)=>{
         const totalJobs = await Job.countDocuments(searchQuery);
         const totalPages = Math.ceil(totalJobs / limit);
 
-        const jobs = await Job.find(searchQuery).populate("recruiterId", "companyName companyLogoUrl -_id").sort({ createdAt: -1 }).skip(skip).limit(limit);
+        const jobs = await Job.find(searchQuery).populate("recruiterId", "companyName companyLogoUrl").sort({ createdAt: -1 }).skip(skip).limit(limit);
         return res.status(200).json({
             jobs, totalJobs, page, totalPages
         });
