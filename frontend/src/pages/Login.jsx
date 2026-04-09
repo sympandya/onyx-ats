@@ -14,7 +14,6 @@ export const Login = ()=>{
 
     const handleSubmit = async (e)=>{
         e.preventDefault();
-        console.log("Payload:", { email, password });
 
         try{
             const respone = await axios.post("http://localhost:8000/api/auth/login", {

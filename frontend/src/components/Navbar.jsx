@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   const { isAuthenticated, user } = useRecoilValue(userState) || {};
-
+  console.log("Current User State:", user);
   return (
     <nav className="flex justify-between items-center p-4 border-b border-gray-300">
       <div>
@@ -35,13 +35,13 @@ export const Navbar = () => {
             <Link to="/saved-jobs">Saved Jobs</Link>
             <Link to="/profile">Profile</Link>
           </>
-        ) : (
+        ) :  user?.role === "admin" ? (
           <>
-            <Link to="/jobs">Dashboard</Link>
+            <Link to="/admin/dashboard">Admin Dashboard</Link>
             <Link to="/Manage">Manage Platform</Link>
             <Link to="/profile">Profile</Link>
           </>
-        )}
+        ) : null}
       </div>
     </nav>
   );
