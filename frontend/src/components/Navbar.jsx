@@ -1,5 +1,5 @@
 import { useRecoilValue } from "recoil";
-import { userState } from "../atoms/userState";
+import { userState } from "../atoms/userState.js";
 import { Link } from "react-router-dom";
 
 export const Navbar = () => {
@@ -8,7 +8,7 @@ export const Navbar = () => {
   return (
     <nav className="flex justify-between items-center p-4 border-b border-gray-300">
       <div>
-        <Link to="/" className="font-bold text-2xl">
+        <Link to="/home" className="font-bold text-2xl">
           Onyx ATS
         </Link>
       </div>
