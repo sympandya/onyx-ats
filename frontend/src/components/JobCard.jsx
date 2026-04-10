@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 export default function JobCard({ jobData }) {
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border p-8 text-gray-700 shadow transition hover:shadow-lg sm:flex-row sm:items-start my-5">
-      <Link to={`/jobs/${jobData._id}`} className="mb-4 shrink-0 sm:mb-0 sm:mr-8">
+      <Link to={`/job/${jobData._id}`} className="mb-4 shrink-0 sm:mb-0 sm:mr-8">
         <div className="group relative h-16 w-16 overflow-hidden rounded-lg border">
           <img
             src={jobData.recruiterId?.companyLogoUrl || "https://static.thenounproject.com/png/1554489-200.png"}
@@ -15,7 +15,7 @@ export default function JobCard({ jobData }) {
       </Link>
 
       <div className="flex flex-1 flex-col text-left">
-        <Link to={`/jobs/${jobData._id}`} className="overflow-hidden pr-7 text-lg font-semibold sm:text-xl">
+        <Link to={`/job/${jobData._id}`} className="overflow-hidden pr-7 text-lg font-semibold sm:text-xl">
           {jobData.title}
         </Link>
         <h3 className="mb-3 mt-1 text-sm text-gray-600">{jobData.recruiterId.companyName}</h3>

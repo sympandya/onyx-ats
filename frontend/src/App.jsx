@@ -8,6 +8,8 @@ import { ProtectedRoute } from './components/ProtectedRoute.jsx'
 import { PageNotFound } from './pages/PageNotFound.jsx'
 import './App.css'
 import { useAuth } from "./hooks/useAuth.js"
+import { JobDetails } from "./pages/JobDetails.jsx"
+import { JobApplication } from "./pages/JobApplication.jsx"
 
 const AppContent = ()=>{
 
@@ -25,6 +27,8 @@ const AppContent = ()=>{
           {/* Candidate Routes */}
           <Route element={<ProtectedRoute allowedRoles={["candidate"]}></ProtectedRoute>}>
             <Route path='/candidate/dashboard' element={<PageNotFound/>}></Route>
+            <Route path='/job/:jobId' element={<JobDetails/>}></Route>
+            <Route path='/job/apply/:jobId' element={<JobApplication/>}></Route>
           </Route>
 
           {/* Recruiter Routes */}

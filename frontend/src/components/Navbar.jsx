@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 
 export const Navbar = () => {
   const { isAuthenticated, user } = useRecoilValue(userState) || {};
-  console.log("Current User State:", user);
   return (
     <nav className="flex justify-between items-center p-4 border-b border-gray-300">
       <div>
