@@ -1,7 +1,11 @@
 import { Link } from "react-router-dom";
+import { userState } from "../atoms/userState";
+import { useRecoilValue } from "recoil";
 
 
 export default function JobCard({ jobData }) {
+  const { user } = useRecoilValue(userState);
+  
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border p-8 text-gray-700 shadow transition hover:shadow-lg sm:flex-row sm:items-start my-5">
       <Link to={`/job/${jobData._id}`} className="mb-4 shrink-0 sm:mb-0 sm:mr-8">
@@ -37,6 +41,15 @@ export default function JobCard({ jobData }) {
           </div>
         </div>
       </div>
+      {/* Only show this if the user is a recruiter and we are on the dashboard */}
+        {user?.role === "recruiter" && (
+            <Link 
+                to={`/recruiter/job/${jobData._id}/applicants`}
+                className="mt-4 inline-flex items-center text-sm font-semibold text-[#256a5e] hover:underline"
+            >
+                View Applicants →
+            </Link>
+        )}
     </div>
   );
 }

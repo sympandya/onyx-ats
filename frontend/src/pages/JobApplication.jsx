@@ -20,13 +20,8 @@ export const JobApplication = () => {
     const [coverLetterLink, setCoverLetterLink] = useState("");
     
     const [isSubmited, setIsSubmited] = useState(false);
-    const [isLoading, setIsLoading] = useState(false);
     const [hasError, setHasError] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
-    if (isLoading) {
-        return <Spinner/>
-    }
 
 
     const handleSubmit = async (e) => {
@@ -43,13 +38,11 @@ export const JobApplication = () => {
                 coverLetter: payloadCoverLetter,
             });
             if(response.status == 201) {
-                setIsLoading(false);
                 setIsSubmited(true);
             }
         }
         catch(e){
             console.error("Something went wrong while retriving the job details", e);
-            setIsLoading(false);
             setHasError(true);
         }
         finally{

@@ -10,6 +10,9 @@ import './App.css'
 import { useAuth } from "./hooks/useAuth.js"
 import { JobDetails } from "./pages/JobDetails.jsx"
 import { JobApplication } from "./pages/JobApplication.jsx"
+import { MyPostedJobs } from "./pages/MyPostedJobs.jsx"
+import { PostJob } from "./pages/PostJob.jsx"
+import { Applicants } from "./pages/Applicants.jsx"
 
 const AppContent = ()=>{
 
@@ -24,16 +27,23 @@ const AppContent = ()=>{
           <Route path='/login' element={<Login />}></Route>
           <Route path='/jobs' element={<Jobs />}></Route>
 
+          {/* Candidate & Recruiter (Shared)*/}
+          <Route element={<ProtectedRoute allowedRoles={["candidate", "recruiter"]}></ProtectedRoute>}>
+            <Route path='/job/:jobId' element={<JobDetails/>}></Route>
+          </Route>
+
           {/* Candidate Routes */}
           <Route element={<ProtectedRoute allowedRoles={["candidate"]}></ProtectedRoute>}>
             <Route path='/candidate/dashboard' element={<PageNotFound/>}></Route>
-            <Route path='/job/:jobId' element={<JobDetails/>}></Route>
             <Route path='/job/apply/:jobId' element={<JobApplication/>}></Route>
           </Route>
 
           {/* Recruiter Routes */}
           <Route element={<ProtectedRoute allowedRoles={["recruiter"]}></ProtectedRoute>}>
             <Route path='/recruiter/dashboard' element={<PageNotFound/>}></Route>
+            <Route path='/recruiter/myjobs' element={<MyPostedJobs/>}></Route>
+            <Route path='/recruiter/postJob' element={<PostJob/>}></Route>
+            <Route path='/recruiter/job/:jobId/applicants' element={<Applicants/>}></Route>
           </Route>
 
           {/* Admin Routes */}

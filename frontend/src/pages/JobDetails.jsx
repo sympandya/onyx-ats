@@ -1,18 +1,42 @@
 import { useEffect, useState } from "react";
+import { useRecoilValue } from "recoil";
+import { userState } from "../atoms/userState.js";
 import { useParams } from "react-router-dom";
 import { axiosInstance } from "../api/axios";
 import { PageNotFound } from "./PageNotFound.jsx";
 import { Spinner } from "../components/Spinner.jsx";
 import { useNavigate } from "react-router-dom";
+import { SaveJob } from "../components/SaveJob.jsx";
 
 export const JobDetails = ()=>{
     const { jobId } = useParams();
+    const { user } = useRecoilValue(userState);
     const [isLoading, setIsLoading] = useState(true);
     const [jobDetails, setJobDetails] = useState(null);
     const [hasError, setHasError] = useState(false);
+    const [isJobSaved, setIsJobSaved] = useState(false);
     const navigate = useNavigate();
+
+    const handleSave = async (e) => {
+        setIsJobSaved(prev=>!prev);
+
+        try{
+            const response = await axiosInstance.post(`job/saved-jobs/${jobId}`);
+            if(response.status === 201 || response.status === 200){
+                console.log("Bookmark updated succesfully...");
+                    return;
+            }
+        }
+        catch(e){
+            console.log("Failed to save, reverting UI...");
+            setIsJobSaved(prev=>!prev);
+            console.error("Something went wrong while adding/removing job to bookmark!!!", e);
+            return;
+        }
+    }
     
     const handleNavigation = () => {
+        const job = jobDetails?.foundJob;
         navigate(`/job/apply/${jobId}`, { 
             state: { 
                 jobTitle: job.title, 
@@ -30,8 +54,15 @@ export const JobDetails = ()=>{
                     setIsLoading(false);
                     return;
                 }
-
                 const jobDetails = response.data;
+
+                if(user.role === "candidate"){
+                    const savedResponse = await axiosInstance.get('job/saved-jobs');
+                    const savedJobsArray = savedResponse.data.savedJobs || [];
+                    const isAlreadySaved = savedJobsArray.some(savedJob => savedJob._id === jobId);
+                    setIsJobSaved(isAlreadySaved);
+                }
+
                 setIsLoading(false);
                 setJobDetails(jobDetails);
             }
@@ -42,7 +73,7 @@ export const JobDetails = ()=>{
             }
         }
         getJobDetails();
-    }, [jobId]);
+    }, [jobId, user?.role]);
 
     if (isLoading || !jobDetails) {
         return <Spinner/>
@@ -86,18 +117,22 @@ export const JobDetails = ()=>{
 
                 <div className="flex flex-col gap-3">
                     <div className="flex gap-2 justify-end">
-                        <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
-                            Save
-                        </button>
+                        {user.role === "candidate" ? (
+                            <button onClick={handleSave} className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                                <SaveJob isJobSaved={isJobSaved}></SaveJob>
+                                {isJobSaved ? "Saved" : "Save"}
+                            </button>
+                        ) : (<></>)}
                         <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
                             Share
                         </button>
                     </div>
-                    <button onClick={handleNavigation} className="w-full px-8 py-2.5 bg-[#256a5e] hover:bg-[#1d5349] text-white rounded-md text-sm font-semibold transition-colors">
-                        Apply Now
-                    </button>
+                    {user.role === "candidate" ? (
+                        <button onClick={handleNavigation} className="w-full px-8 py-2.5 bg-[#256a5e] hover:bg-[#1d5349] text-white rounded-md text-sm font-semibold transition-colors">
+                            Apply Now
+                        </button>
+                    ) : (<></>)}
                 </div>
             </div>
 
