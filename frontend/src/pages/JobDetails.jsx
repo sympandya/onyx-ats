@@ -37,7 +37,7 @@ export const JobDetails = ()=>{
     
     const handleNavigation = () => {
         const job = jobDetails?.foundJob;
-        navigate(`/job/apply/${jobId}`, { 
+        navigate(`/candidate/job/apply/${jobId}`, { 
             state: { 
                 jobTitle: job.title, 
                 companyName: job.recruiterId?.companyName,

@@ -5,6 +5,8 @@ import { useRecoilValue } from "recoil";
 
 export default function JobCard({ jobData }) {
   const { user } = useRecoilValue(userState);
+
+  const isJobOwner = user?.role === "recruiter" && user?._id === (jobData.recruiterId?._id || jobData.recruiterId);
   
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border p-8 text-gray-700 shadow transition hover:shadow-lg sm:flex-row sm:items-start my-5">
@@ -42,7 +44,7 @@ export default function JobCard({ jobData }) {
         </div>
       </div>
       {/* Only show this if the user is a recruiter and we are on the dashboard */}
-        {user?.role === "recruiter" && (
+        {isJobOwner && (
             <Link 
                 to={`/recruiter/job/${jobData._id}/applicants`}
                 className="mt-4 inline-flex items-center text-sm font-semibold text-[#256a5e] hover:underline"

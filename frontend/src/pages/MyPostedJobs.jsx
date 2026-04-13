@@ -16,7 +16,6 @@ export const MyPostedJobs = ()=>{
             try{
                 const response = await axiosInstance.get('/job/myJobs');
                 setMyJobs(response.data.jobs);
-                console.log(response.data.jobs);
                 setIsLoading(false);
             }
             catch(e){
