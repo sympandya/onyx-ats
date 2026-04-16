@@ -66,7 +66,7 @@ export const userLogin = async (req, res, next)=>{
                 email: email
             });
 
-            if(!foundUser) return res.status(404).json({msg: "Invalid credentials, try again!!!"});
+            if(!foundUser) return res.status(401).json({msg: "User not found!!!"});
 
             const isPasswordValid = await bcrypt.compare(password, foundUser.password);
 
@@ -91,7 +91,7 @@ export const userLogin = async (req, res, next)=>{
     }
     else{
         res.status(400).json({
-            msg: "Login Validation failed!!!",
+            msg: "Password must be atleast 6 characters",
             errors: parseResults.error
         });
     }

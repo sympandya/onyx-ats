@@ -26,13 +26,12 @@ export const SignUp = ()=>{
             }
         }
         catch (e) {
-            if (e.response?.data?.errors) {
-                setValidationErrors(e.response.data.errors);
-            } else if (e.response?.data?.msg) {
-                setValidationErrors([e.response.data.msg]);
-            } else {
-                setValidationErrors(["An unexpected network error occurred."]);
-            }
+            const d = e.response?.data;
+            const zodMsg = d?.errors?.message;
+            
+            setValidationErrors(
+                zodMsg ? JSON.parse(zodMsg).map(err => err.message) : [d?.msg || "Network error occurred."]
+            );
         }
     }
 
@@ -87,8 +86,8 @@ export const SignUp = ()=>{
                     </div>
 
                     <div>
-                        <select name="Role" id="userRole" value={userRole} onChange={e=> setUserRole(e.target.value)} className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-sm/6 placeholder:font-medium placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 text-center">
-                            <option value="" disabled hidden required>--Choose Your Role--</option>
+                        <select name="Role" id="userRole" value={userRole} onChange={e=> setUserRole(e.target.value)} required className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-sm/6 placeholder:font-medium placeholder:text-gray-900 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 text-center">
+                            <option value="" disabled hidden>--Choose Your Role--</option>
                             <option value="candidate">Candidate</option>
                             <option value="recruiter">Recruiter</option>
                         </select>
