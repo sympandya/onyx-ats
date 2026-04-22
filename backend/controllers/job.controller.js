@@ -104,7 +104,7 @@ export const getJobById = async (req, res)=>{
 // Get all job (by recruiter)
 export const getMyJobs = async (req, res) => {
     try {
-        const myJobs = await Job.find({ recruiterId: req.user._id }).sort({ createdAt: -1 });
+        const myJobs = await Job.find({ recruiterId: req.user._id }).populate("recruiterId", "companyName companyLogoUrl").sort({ createdAt: -1 });
 
         if(myJobs.length === 0) {
             return res.status(200).json({ jobs: [], msg: "You haven't posted any jobs yet." });

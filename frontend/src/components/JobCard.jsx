@@ -7,7 +7,6 @@ export default function JobCard({ jobData }) {
   const { user } = useRecoilValue(userState);
 
   const isJobOwner = user?.role === "recruiter" && user?._id === (jobData.recruiterId?._id || jobData.recruiterId);
-  
   return (
     <div className="group flex flex-col overflow-hidden rounded-lg border p-8 text-gray-700 shadow transition hover:shadow-lg sm:flex-row sm:items-start my-5">
       <Link to={`/job/${jobData._id}`} className="mb-4 shrink-0 sm:mb-0 sm:mr-8">
