@@ -127,7 +127,7 @@ export const Navbar = () => {
                 {isAuthenticated && user?.role === "admin" && (
                     <>
                         <Link to="/admin/dashboard" className="font-medium text-gray-700 hover:text-[#256a5e] transition-colors">Dashboard</Link>
-                        <Link to="/manage" className="font-medium text-gray-700 hover:text-[#256a5e] transition-colors">Manage</Link>
+                        <Link to="/admin/manage" className="font-medium text-gray-700 hover:text-[#256a5e] transition-colors">Manage</Link>
                         <ProfileDropdown profileRoute="/admin/profile" />
                     </>
                 )}

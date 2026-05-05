@@ -27,7 +27,7 @@ export const MyPostedJobs = ()=>{
 
     }, []);
 
-    if(isLoading) <Spinner />
+    if(isLoading) return <Spinner />
 
     return (
         <div className="max-w-7xl mx-auto p-6">

@@ -22,6 +22,8 @@ import { SalaryEstimator } from "./pages/SalaryEstimator.jsx"
 import { CandidateDashboard } from "./pages/CandidateDashboard.jsx"
 import { RecruiterDashboard } from "./pages/RecruiterDashboard.jsx"
 import { LandingPage } from "./pages/LandingPage.jsx"
+import { AdminDashboard } from "./pages/AdminDashboard.jsx"
+import { AdminManage } from "./pages/AdminManage.jsx"
 
 
 const AppContent = ()=>{
@@ -65,7 +67,8 @@ const AppContent = ()=>{
 
           {/* Admin Routes */}
           <Route element={<ProtectedRoute allowedRoles={["admin"]}></ProtectedRoute>}>
-            <Route path='/admin/dashboard' element={<PageNotFound />}></Route>
+            <Route path='/admin/dashboard' element={<AdminDashboard />}></Route>
+            <Route path='/admin/manage' element={<AdminManage />}></Route>
           </Route>
 
           <Route path="*" element={<PageNotFound></PageNotFound>} />

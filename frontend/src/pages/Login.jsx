@@ -38,8 +38,10 @@ export const Login = ()=>{
 
             if (normalizedUser.role === "recruiter") {
                 navigate('/recruiter/dashboard');
-            } else {
+            } else if (normalizedUser.role === "candidate") {
                 navigate('/candidate/dashboard');
+            } else {
+                navigate('/admin/dashboard');
             }
         } 
         catch (e) {

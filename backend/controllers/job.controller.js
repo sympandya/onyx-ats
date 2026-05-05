@@ -60,7 +60,14 @@ export const getAllJobs = async (req, res)=>{
     const limit = parseInt(req.query.limit) || 5;
     const skip = (page - 1) * limit;
 
-    if(req.query.keyword) searchQuery.title = { $regex: req.query.keyword, $options: 'i' };
+    if(req.query.keyword) {
+        const regex = { $regex: req.query.keyword, $options: 'i' };
+        searchQuery.$or = [
+            { title: regex },
+            { location: regex },
+            { requiredSkills: regex } 
+        ];
+    }
     if(req.query.jobType) searchQuery.jobType = req.query.jobType;
     if(req.query.workMode) searchQuery.workMode = req.query.workMode;
     if(req.query.experienceLevel) searchQuery.experienceLevel = req.query.experienceLevel;

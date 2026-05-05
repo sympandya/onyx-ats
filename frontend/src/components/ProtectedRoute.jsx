@@ -6,7 +6,7 @@ import { UnAuthorized } from "../pages/UnAuthorized.jsx";
 
 export const ProtectedRoute = ({allowedRoles})=>{
 
-    const user = useRecoilValue(userState);
+    const user = useRecoilValue(userState) || {};
 
     if(user.isLoading) return <Spinner />
     if(!user.isAuthenticated) {

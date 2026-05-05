@@ -4,7 +4,7 @@ import { useRecoilValue } from "recoil";
 
 
 export default function JobCard({ jobData }) {
-  const { user } = useRecoilValue(userState);
+  const { user } = useRecoilValue(userState) || {};
 
   const isJobOwner = user?.role === "recruiter" && user?._id === (jobData.recruiterId?._id || jobData.recruiterId);
   return (

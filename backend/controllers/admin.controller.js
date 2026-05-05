@@ -23,12 +23,28 @@ export const getStats = async (req, res)=>{
 
 export const toggleUserStatus = async (req, res)=>{
     try{
-        const updatedUser = await User.findByIdAndUpdate(req.params.userId, [{ $set: { isActive: { $not: "$isActive" } } }], {new: true});
-        if(!updatedUser) return res.status(404).json({msg: "User not found!!!"});
+        const currentUser = await User.findById(req.params.userId);
+        if(!currentUser) return res.status(404).json({msg: "User not found!!!"});
+
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.userId, 
+            { isActive: !currentUser.isActive }, 
+            { new: true }
+        );
         
         return res.status(200).json({msg: "Status updated successfully..."});
     }
     catch(e){
+        console.log("ERROR:", e); 
         return res.status(500).json({msg: "Something went wrong!!!", errors: e});
+    }
+}
+
+export const getAllUsers = async (req, res) => {
+    try {
+        const users = await User.find().select("-password").sort({ createdAt: -1 });
+        return res.status(200).json({ users });
+    } catch (e) {
+        return res.status(500).json({ msg: "Something went wrong!!!", errors: e });
     }
 }

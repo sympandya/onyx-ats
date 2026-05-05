@@ -10,7 +10,7 @@ import { SaveJob } from "../components/SaveJob.jsx";
 
 export const JobDetails = ()=>{
     const { jobId } = useParams();
-    const { user } = useRecoilValue(userState);
+    const { user } = useRecoilValue(userState) || {};
     const [isLoading, setIsLoading] = useState(true);
     const [jobDetails, setJobDetails] = useState(null);
     const [hasError, setHasError] = useState(false);
@@ -74,6 +74,51 @@ export const JobDetails = ()=>{
         }
         getJobDetails();
     }, [jobId, user?.role]);
+
+    // --- QnA LOGIC START ---
+    const [qnaList, setQnaList] = useState([]);
+    const [newQuestion, setNewQuestion] = useState("");
+    const [answerInputs, setAnswerInputs] = useState({});
+
+    useEffect(() => {
+        const fetchQnA = async () => {
+            try {
+                const res = await axiosInstance.get(`job/qa/${jobId}`); 
+                if (res.data.jobQnA) setQnaList(res.data.jobQnA);
+            } catch (e) {
+                console.error("Could not fetch QnA", e);
+            }
+        };
+        fetchQnA();
+    }, [jobId]);
+
+    const handleAskQuestion = async () => {
+        if (!newQuestion.trim()) return;
+        try {
+            await axiosInstance.post(`job/qa/ask/${jobId}`, { questionText: newQuestion });
+            setNewQuestion("");
+            // Refresh QnA list
+            const res = await axiosInstance.get(`job/qa/${jobId}`);
+            if (res.data.jobQnA) setQnaList(res.data.jobQnA);
+        } catch (e) {
+            console.error("Failed to post question", e);
+        }
+    };
+
+    const handleAnswerQuestion = async (questionId) => {
+        const answerText = answerInputs[questionId];
+        if (!answerText?.trim()) return;
+        try {
+            await axiosInstance.post(`job/qa/answer/${jobId}/${questionId}`, { answerText });
+            setAnswerInputs(prev => ({ ...prev, [questionId]: "" }));
+            // Refresh QnA list
+            const res = await axiosInstance.get(`job/qa/${jobId}`);
+            if (res.data.jobQnA) setQnaList(res.data.jobQnA);
+        } catch (e) {
+            console.error("Failed to post answer", e);
+        }
+    };
+    // --- QnA LOGIC END ---
 
     if (isLoading || !jobDetails) {
         return <Spinner/>
@@ -169,7 +214,7 @@ export const JobDetails = ()=>{
 
             {/* --- Required Skills --- */}
             {job.requiredSkills && job.requiredSkills.length > 0 && (
-                <div>
+                <div className="mb-10">
                     <h2 className="text-lg font-bold text-gray-900 mb-4">Requirements and Skills</h2>
                     <div className="flex flex-wrap gap-2">
                         {job.requiredSkills.map((skill, index) => (
@@ -183,6 +228,85 @@ export const JobDetails = ()=>{
                     </div>
                 </div>
             )}
+
+            {/* --- Job Q&A Section START --- */}
+            <div className="pt-8 border-t border-gray-200">
+                <h2 className="text-xl font-bold text-gray-900 mb-6">Questions & Answers</h2>
+                
+                {/* Ask a Question (Candidates Only) */}
+                {user.role === "candidate" && (
+                    <div className="mb-8 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <textarea 
+                            value={newQuestion}
+                            onChange={(e) => setNewQuestion(e.target.value)}
+                            placeholder="Ask the hiring manager a question about this role..."
+                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#256a5e] mb-3 resize-none text-sm"
+                            rows="2"
+                        />
+                        <div className="flex justify-end">
+                            <button 
+                                onClick={handleAskQuestion}
+                                className="px-5 py-2 bg-[#256a5e] text-white text-sm font-medium rounded-md hover:bg-[#1d5349] transition-colors"
+                            >
+                                Post Question
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Q&A Thread List */}
+                <div className="space-y-6">
+                    {qnaList.length === 0 ? (
+                        <p className="text-sm text-gray-500 italic">No questions have been asked yet.</p>
+                    ) : (
+                        qnaList.map((q) => (
+                            <div key={q._id} className="border-b border-gray-100 pb-5 last:border-0">
+                                {/* The Question */}
+                                <div className="flex gap-3 mb-2">
+                                    <div className="w-8 h-8 rounded-full bg-[#e0f2ef] text-[#256a5e] flex items-center justify-center font-bold text-sm shrink-0">
+                                        {q.askerId?.name?.charAt(0) || "?"}
+                                    </div>
+                                    <div>
+                                        <p className="text-sm font-semibold text-gray-900">{q.askerId?.name} <span className="text-xs text-gray-500 font-normal ml-2">{new Date(q.createdAt).toLocaleDateString()}</span></p>
+                                        <p className="text-sm text-gray-700 mt-1">{q.questionText}</p>
+                                    </div>
+                                </div>
+
+                                {/* The Answer (If answered) */}
+                                {q.isAnswered ? (
+                                    <div className="ml-11 mt-3 bg-[#f8fafc] border-l-4 border-[#256a5e] p-3 rounded-r-md">
+                                        <p className="text-xs font-semibold text-gray-900 mb-1">Recruiter Reply</p>
+                                        <p className="text-sm text-gray-700">{q.answerText}</p>
+                                    </div>
+                                ) : (
+                                    /* Answer Input (For the specific Recruiter who posted the job only) */
+                                    user.role === "recruiter" && job.recruiterId?._id === user._id && (
+                                        <div className="ml-11 mt-3">
+                                            <div className="flex gap-2">
+                                                <input 
+                                                    type="text"
+                                                    value={answerInputs[q._id] || ""}
+                                                    onChange={(e) => setAnswerInputs({...answerInputs, [q._id]: e.target.value})}
+                                                    placeholder="Type your reply here..."
+                                                    className="flex-1 px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-[#256a5e]"
+                                                />
+                                                <button 
+                                                    onClick={() => handleAnswerQuestion(q._id)}
+                                                    className="px-4 py-1.5 bg-[#256a5e] text-white text-sm font-medium rounded-md hover:bg-[#1d5349]"
+                                                >
+                                                    Reply
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        ))
+                    )}
+                </div>
+            </div>
+            {/* --- Job Q&A Section END --- */}
+
         </div>
     )
 }

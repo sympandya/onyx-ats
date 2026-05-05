@@ -9,7 +9,16 @@ export const Applicants = ()=>{
     const [applicants, setApplicants] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    const handleStatusUpdate = async (applicationId, newStatus) => {
+    const [modalType, setModalType] = useState(null); // 'interview' or 'reject'
+    const [selectedAppId, setSelectedAppId] = useState(null);
+    const [pendingStatus, setPendingStatus] = useState("");
+    
+    const [interviewDate, setInterviewDate] = useState("");
+    const [interviewTime, setInterviewTime] = useState("");
+    const [interviewLink, setInterviewLink] = useState("");
+    const [rejectionReason, setRejectionReason] = useState("");
+
+    const handleStatusUpdate = async (applicationId, newStatus, additionalData = {}) => {
         const targetApplicant = applicants.find(app => app._id === applicationId);
         if (!targetApplicant) return; 
         const previousStatus = targetApplicant.status;
@@ -22,7 +31,8 @@ export const Applicants = ()=>{
 
         try {
             await axiosInstance.patch(`/application/status/${applicationId}/update`, {
-                status: newStatus
+                status: newStatus,
+                ...additionalData
             });
             console.log(`Successfully updated application ${applicationId} to ${newStatus}`);
             
@@ -35,6 +45,42 @@ export const Applicants = ()=>{
                 )
             );
         }
+    };
+
+    const handleSelectChange = (applicationId, newStatus) => {
+        if (newStatus === "Interviewing") {
+            setSelectedAppId(applicationId);
+            setPendingStatus(newStatus);
+            setModalType("interview");
+        } else if (newStatus === "Rejected") {
+            setSelectedAppId(applicationId);
+            setPendingStatus(newStatus);
+            setModalType("reject");
+        } else {
+            handleStatusUpdate(applicationId, newStatus);
+        }
+    };
+
+    const handleModalSubmit = () => {
+        let additionalData = {};
+        if (modalType === "interview") {
+            additionalData = { interviewDate, interviewTime, interviewLink };
+        } else if (modalType === "reject") {
+            additionalData = { rejectionReason };
+        }
+        
+        handleStatusUpdate(selectedAppId, pendingStatus, additionalData);
+        closeModal();
+    };
+
+    const closeModal = () => {
+        setModalType(null);
+        setSelectedAppId(null);
+        setPendingStatus("");
+        setInterviewDate("");
+        setInterviewTime("");
+        setInterviewLink("");
+        setRejectionReason("");
     };
 
     useEffect(()=>{
@@ -88,7 +134,6 @@ export const Applicants = ()=>{
                                     <th className="p-5 font-semibold">Match Score</th>
                                     <th className="p-5 font-semibold">Documents</th>
                                     <th className="p-5 font-semibold">Status</th>
-                                    <th className="p-5 font-semibold text-right">Actions</th>
                                 </tr>
                             </thead>
                             
@@ -97,7 +142,7 @@ export const Applicants = ()=>{
                                 {applicants.map((app) => (
                                     <tr key={app._id} className="hover:bg-gray-50 transition-colors">
                                         
-                                        {/* 1. Candidate Info (Assuming candidateId is populated) */}
+                                        {/* 1. Candidate Info */}
                                         <td className="p-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-full bg-[#e0f2ef] text-[#256a5e] flex items-center justify-center font-bold uppercase border border-[#c4e4df]">
@@ -155,10 +200,8 @@ export const Applicants = ()=>{
                                         <td className="p-5">
                                             <select 
                                                 value={app.status}
-                                                onChange={(e) => {
-                                                    handleStatusUpdate(app._id, e.target.value)
-                                                    console.log(`Update ${app._id} to ${e.target.value}`);
-                                                }}
+                                                // MODIFIED TO USE INTERCEPTOR FUNCTION
+                                                onChange={(e) => handleSelectChange(app._id, e.target.value)}
                                                 className={`text-sm font-medium rounded-md px-3 py-1.5 cursor-pointer border shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-[#256a5e] transition-colors
                                                     ${app.status === 'Pending' ? 'bg-gray-50 text-gray-700 border-gray-300' : ''}
                                                     ${app.status === 'Interviewing' ? 'bg-blue-50 text-blue-700 border-blue-200' : ''}
@@ -172,13 +215,6 @@ export const Applicants = ()=>{
                                                 <option value="Rejected">Rejected</option>
                                             </select>
                                         </td>
-
-                                        {/* 5. Action Buttons */}
-                                        <td className="p-5 text-right">
-                                            <button className="text-sm font-semibold text-[#256a5e] hover:text-[#1d5349] transition-colors">
-                                                Review Details &rarr;
-                                            </button>
-                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -186,6 +222,85 @@ export const Applicants = ()=>{
                     </div>
                 </div>
             )}
+
+            {modalType && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+                        
+                        {/* Modal Header */}
+                        <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-bold text-gray-900">
+                                {modalType === 'interview' ? 'Schedule Interview' : 'Provide Rejection Reason'}
+                            </h3>
+                        </div>
+
+                        {/* Modal Body */}
+                        <div className="p-6 space-y-4">
+                            {modalType === 'interview' ? (
+                                <>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Interview Date</label>
+                                        <input 
+                                            type="date" 
+                                            value={interviewDate}
+                                            onChange={(e) => setInterviewDate(e.target.value)}
+                                            className="mt-1 block w-full rounded-md border-gray-300 border px-3 py-2 shadow-sm focus:border-[#256a5e] focus:ring-[#256a5e] sm:text-sm outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Interview Time</label>
+                                        <input 
+                                            type="time" 
+                                            value={interviewTime}
+                                            onChange={(e) => setInterviewTime(e.target.value)}
+                                            className="mt-1 block w-full rounded-md border-gray-300 border px-3 py-2 shadow-sm focus:border-[#256a5e] focus:ring-[#256a5e] sm:text-sm outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Meeting Link</label>
+                                        <input 
+                                            type="url" 
+                                            placeholder="https://meet.google.com/..."
+                                            value={interviewLink}
+                                            onChange={(e) => setInterviewLink(e.target.value)}
+                                            className="mt-1 block w-full rounded-md border-gray-300 border px-3 py-2 shadow-sm focus:border-[#256a5e] focus:ring-[#256a5e] sm:text-sm outline-none"
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Reason for Rejection</label>
+                                    <p className="text-xs text-gray-500 mb-2">This feedback will be stored for transparency (Anti-Ghosting Protocol).</p>
+                                    <textarea 
+                                        rows="4" 
+                                        placeholder="Briefly explain why the candidate was not selected..."
+                                        value={rejectionReason}
+                                        onChange={(e) => setRejectionReason(e.target.value)}
+                                        className="mt-1 block w-full rounded-md border-gray-300 border px-3 py-2 shadow-sm focus:border-[#256a5e] focus:ring-[#256a5e] sm:text-sm outline-none resize-none"
+                                    ></textarea>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Modal Footer */}
+                        <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
+                            <button 
+                                onClick={closeModal}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#256a5e]"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleModalSubmit}
+                                className="px-4 py-2 text-sm font-medium text-white bg-[#256a5e] border border-transparent rounded-lg hover:bg-[#1d5349] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#256a5e]"
+                            >
+                                Save & Send Email
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     )
 }
