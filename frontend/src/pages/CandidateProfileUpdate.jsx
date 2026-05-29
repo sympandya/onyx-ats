@@ -36,7 +36,7 @@ export const CandidateProfileUpdate = ()=>{
                     setBio(userData.bio || "");
                     setDefaultResumeLink(userData.defaultResumeLink || "");
                     
-                    if (userData.skills && Array.isArray(userData.skills)) {
+                    if (Array.isArray(userData.skills)) {
                         setSkills(userData.skills.join(", "));
                     } else {
                         setSkills(userData.skills || "");
@@ -59,12 +59,13 @@ export const CandidateProfileUpdate = ()=>{
         setIsSubmitting(true); 
         setHasError(false);
 
-        let updatePayload = {};
-        if(name) updatePayload.name = name;
-        if(email) updatePayload.email = email;
-        if(skills) updatePayload.skills = skills.split(',').map(skill => skill.trim()).filter(skill => skill !== "");
-        if(bio) updatePayload.bio = bio;
-        if(defaultResumeLink) updatePayload.defaultResumeLink = defaultResumeLink;
+        let updatePayload = {
+            name,
+            email,
+            skills, 
+            bio,
+            defaultResumeLink
+        };
 
         try{
             const response = await axiosInstance.patch(`/user/candidate/profileUpdate`, updatePayload);
@@ -80,8 +81,16 @@ export const CandidateProfileUpdate = ()=>{
         catch(e){
             setIsSubmitting(false);
             setHasError(true);
-            if (e.response?.data?.errors) {
-                setValidationErrors(e.response.data.errors);
+            
+            const errorObj = e.response?.data?.errors;
+            
+            if (errorObj?.message) {
+                try {
+                    const parsed = JSON.parse(errorObj.message);
+                    setValidationErrors(Array.isArray(parsed) ? parsed.map(err => err.message) : [errorObj.message]);
+                } catch {
+                    setValidationErrors([errorObj.message]);
+                }
             } else if (e.response?.data?.msg) {
                 setValidationErrors([e.response.data.msg]);
             } else {
@@ -89,6 +98,8 @@ export const CandidateProfileUpdate = ()=>{
             }
         }
     }
+
+    if (isFetching) return <div className="text-center py-20">Loading profile...</div>;
 
     return (
         <div className="max-w-5xl mx-auto py-10 px-4">
@@ -104,7 +115,7 @@ export const CandidateProfileUpdate = ()=>{
                             <h3 className="text-sm font-bold text-red-800 mb-1">Please fix the following errors:</h3>
                             <ul className="list-disc pl-4 text-sm text-red-700 space-y-1">
                                 {validationErrors.map((err, index) => (
-                                    <li key={index}>{err.message || err}</li>
+                                    <li key={index}>{err}</li>
                                 ))}
                             </ul>
                         </div>

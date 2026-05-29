@@ -4,8 +4,8 @@ import { postJob, getAllJobs, getJobById, saveJob, getSavedJobs, getMyJobs, askQ
 
 const jobRouter = Router();
   
-jobRouter.get('/', getAllJobs); 
-jobRouter.post('/', verifyToken, restrictTo(["recruiter"]), postJob); 
+jobRouter.get('/', getAllJobs);
+jobRouter.post('/', verifyToken, restrictTo(["recruiter"]), postJob);
 
 jobRouter.get('/myJobs', verifyToken, restrictTo(["recruiter"]), getMyJobs);
 jobRouter.get('/saved-jobs', verifyToken, restrictTo(["candidate"]), getSavedJobs);

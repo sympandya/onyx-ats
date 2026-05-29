@@ -4,12 +4,14 @@ const applicationSchema = new mongoose.Schema({
     jobId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Job",
-        required: true
+        required: true,
+        index: true
     },
     candidateId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
-        required: true
+        required: true,
+        index: true
     },
     appliedResumeLink: {
         type: String,
