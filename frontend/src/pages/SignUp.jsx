@@ -2,6 +2,7 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { axiosInstance } from "../api/axios";
 
 export const SignUp = ()=>{
 
@@ -19,7 +20,7 @@ export const SignUp = ()=>{
         setValidationErrors([]);
 
         try{
-            const respone = await axios.post("https://onyx-ats.vercel.app/api/auth/signup", {
+            const response = await axiosInstance.post("/auth/signup", {
                 email, password, name: fullName, role: userRole
             });
             if(respone.status === 201){

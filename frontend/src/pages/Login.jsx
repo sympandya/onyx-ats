@@ -20,7 +20,7 @@ export const Login = ()=>{
         setIsSubmitting(true);
 
         try{
-            const response = await axios.post("https://onyx-ats.vercel.app/api/auth/login", {
+            const response = await axiosInstance.post("/auth/login", {
                 email, password
             });
             
