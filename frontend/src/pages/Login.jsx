@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom"
 import axios from "axios";
 import { userState } from "../atoms/userState";
 import { useSetRecoilState } from "recoil";
+import { axiosInstance } from "../api/axios";
 
 export const Login = ()=>{
     const [email, setEmail] = useState("");
