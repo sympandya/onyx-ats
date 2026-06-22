@@ -19,7 +19,7 @@ export const SignUp = ()=>{
         setValidationErrors([]);
 
         try{
-            const respone = await axios.post("http://localhost:8000/api/auth/signup", {
+            const respone = await axios.post("https://onyx-ats.vercel.app/api/auth/signup", {
                 email, password, name: fullName, role: userRole
             });
             if(respone.status === 201){
