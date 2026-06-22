@@ -83,14 +83,23 @@ export const applyJob = async (req, res)=>{
 // Candidate's applied jobs
 export const getAppliedJobs = async (req, res) => {
     try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
+
+        const totalApplications = await Application.countDocuments({ candidateId: req.user._id });
+        const totalPages = Math.ceil(totalApplications / limit);
+
         const applications = await Application.find({ candidateId: req.user._id })
             .populate({
                 path: "jobId",
                 populate: { path: "recruiterId", select: "companyName companyLogoUrl" } 
             })
-            .sort({ createdAt: -1 });
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
 
-        return res.status(200).json({ applications });
+        return res.status(200).json({ applications, totalPages, page });
     } catch (e) {
         return res.status(500).json({ msg: "Failed to fetch applied jobs", errors: e.message });
     }

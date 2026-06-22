@@ -17,7 +17,7 @@ export const LandingPage = () => {
                 {/* Badge */}
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#f2f9f8] border border-[#c4e4df] text-[#1d5349] text-xs font-bold tracking-wide uppercase mb-8 shadow-sm">
                     <span className="w-2 h-2 rounded-full bg-[#256a5e] animate-pulse"></span>
-                    Onyx ATS Beta is Live
+                    Onyx is Live Now
                 </div>
 
                 {/* Main Headline */}
@@ -84,26 +84,6 @@ export const LandingPage = () => {
                             </Link>
                         </>
                     )}
-                </div>
-
-                {/* Social Proof / Stats */}
-                <div className="mt-20 pt-10 border-t border-gray-100 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto opacity-70">
-                    <div>
-                        <p className="text-3xl font-extrabold text-gray-900">500+</p>
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Active Jobs</p>
-                    </div>
-                    <div>
-                        <p className="text-3xl font-extrabold text-gray-900">10k+</p>
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Candidates</p>
-                    </div>
-                    <div>
-                        <p className="text-3xl font-extrabold text-gray-900">98%</p>
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Match Rate</p>
-                    </div>
-                    <div>
-                        <p className="text-3xl font-extrabold text-gray-900">24h</p>
-                        <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Avg Response</p>
-                    </div>
                 </div>
 
             </div>

@@ -3,6 +3,7 @@ import { axiosInstance } from "../api/axios";
 import { useNavigate } from "react-router-dom";
 import { Spinner } from "../components/Spinner.jsx";
 import JobCard from "../components/JobCard.jsx";
+import { Pagination } from "../components/Pagination.jsx";
 
 export const MyPostedJobs = ()=>{
     
@@ -10,12 +11,17 @@ export const MyPostedJobs = ()=>{
     const [myJobs, setMyJobs] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(()=>{
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
+    useEffect(()=>{
         const getMyJobs = async()=>{
             try{
-                const response = await axiosInstance.get('/job/myJobs');
+                setIsLoading(true);
+                const response = await axiosInstance.get(`/job/myJobs?page=${currentPage}&limit=5`);
                 setMyJobs(response.data.jobs);
+                setTotalPages(response.data.totalPages || 1);
                 setIsLoading(false);
             }
             catch(e){
@@ -25,7 +31,7 @@ export const MyPostedJobs = ()=>{
         }
         getMyJobs();
 
-    }, []);
+    }, [currentPage]);
 
     if(isLoading) return <Spinner />
 
@@ -49,14 +55,20 @@ export const MyPostedJobs = ()=>{
                     </p>
                 </div>
             ) : (
-                <div className="mt-6">
-                    {myJobs.map((job) => {
-                        return <JobCard jobData={job} key={job._id}></JobCard>
-                    })}
-                </div>
+                <>
+                    <div className="mt-6">
+                        {myJobs.map((job) => {
+                            return <JobCard jobData={job} key={job._id}></JobCard>
+                        })}
+                    </div>
+
+                    <Pagination 
+                        currentPage={currentPage} 
+                        totalPages={totalPages} 
+                        onPageChange={(newPage) => setCurrentPage(newPage)} 
+                    />
+                </>
             )}
-            
-            
         </div>
     )
 }

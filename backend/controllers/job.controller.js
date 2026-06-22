@@ -111,13 +111,24 @@ export const getJobById = async (req, res)=>{
 // Get all job (by recruiter)
 export const getMyJobs = async (req, res) => {
     try {
-        const myJobs = await Job.find({ recruiterId: req.user._id }).populate("recruiterId", "companyName companyLogoUrl").sort({ createdAt: -1 });
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 5;
+        const skip = (page - 1) * limit;
 
-        if(myJobs.length === 0) {
-            return res.status(200).json({ jobs: [], msg: "You haven't posted any jobs yet." });
+        const totalJobs = await Job.countDocuments({ recruiterId: req.user._id });
+        const totalPages = Math.ceil(totalJobs / limit);
+
+        const myJobs = await Job.find({ recruiterId: req.user._id })
+            .populate("recruiterId", "companyName companyLogoUrl")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        if(myJobs.length === 0 && page === 1) {
+            return res.status(200).json({ jobs: [], msg: "You haven't posted any jobs yet.", totalPages: 1 });
         }
 
-        return res.status(200).json({ jobs: myJobs });
+        return res.status(200).json({ jobs: myJobs, totalPages, page });
     } 
     catch (e) {
         return res.status(500).json({ msg: "Failed to fetch your jobs!!!", errors: e.message });

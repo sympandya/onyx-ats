@@ -25,7 +25,6 @@ export const verifyToken = async (req, res, next)=>{
 
 export const restrictTo = (roles) => {
     return (req, res, next) => {
-        // req.user exists because verifyToken runs right before this!
         if (!roles.includes(req.user.role)) {
             return res.status(403).json({ 
                 msg: "You do not have permission to perform this action." 
