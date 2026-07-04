@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { RecoilRoot } from 'recoil'
+import { Analytics } from '@vercel/analytics/react'
 import { SignUp } from './pages/SignUp.jsx'
 import { Login } from './pages/Login.jsx'
 import { Jobs } from "./pages/Jobs.jsx"
@@ -82,6 +83,7 @@ function App() {
   return (
     <RecoilRoot>
       <AppContent />
+      <Analytics />
     </RecoilRoot>
   )
 }
